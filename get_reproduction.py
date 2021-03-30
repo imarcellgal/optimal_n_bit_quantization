@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from sympy import Symbol, oo
 from sympy.stats import Normal, E, cdf, density,P
 import pandas as pd
+import pickle
+import json
 
 
 def get_v_bounds(points):
@@ -53,24 +55,29 @@ def get_new_xhat(rvs, rvs2, v_bounds, get_distortion = False):
             exps_symb.append(tmp_exp2)
         exps.append(tmp_exp)
         if get_distortion == True:
-            distortions.append(E((rvs2-float(tmp_exp2))**2,( rvs2<ub2)&(rvs2>lb2))*P((rvs2<ub2)&(rvs2>lb2)))
+            try:
+                distortions.append(E((rvs2-float(tmp_exp2))**2,( rvs2<ub2)&(rvs2>lb2))*P((rvs2<ub2)&(rvs2>lb2)))
+            except:
+                distortions.append(1)
     if get_distortion==False:
         return exps, exps_symb
     else:
         return exps, exps_symb, distortions
 
 
-
-K = 200 #number of iteration of the Iloyd's algorithm
-sigmas = [1] #define which sigma values to run algorithm on
-Rs = np.arange(2,100,2) #define which R values to run the algorithm on
+K = 300 #number of iteration of the Iloyd's algorithm
+sigmas = np.arange(1,6) #define which sigma values to run algorithm on
+Rs = np.arange(2,25) #define which R values to run the algorithm on
 all_res = pd.DataFrame() #initalize dataframe for storing results
 all_xhat=[] #store xhat values for different settings and the distortions for
 # each region
-
+all_xhat_reduced={} #same as above but only store float values
+config = {'K':K, 'sigmas':sigmas.tolist(),'Rs':Rs.tolist()}
+with open("results/config.txt", "wb") as fp:
+    pickle.dump(config, fp)
 # the algorithm
 for jj in range(len(Rs)):
-    points = np.sort(np.random.rand(Rs[jj]))
+    points = np.sort(np.random.rand(Rs[jj]))*2-1
     for ii in range(len(sigmas)):
         rvs = st.norm(scale = sigmas[ii])
         rvs2 = Normal('rvs2', 0, sigmas[ii])
@@ -84,10 +91,20 @@ for jj in range(len(Rs)):
         final_v_bounds = get_v_bounds(points)
         exps, exps_symb, distortions = get_new_xhat(rvs,rvs2, final_v_bounds, get_distortion = True )
         all_xhat.append((exps,exps_symb,distortions))
-
+        all_xhat_reduced[(Rs[jj],sigmas[ii])]=([exps,[float(d) for d in distortions],final_v_bounds])
         distortion = np.sum(distortions)
         D = sigmas[ii]**2*2.**(-2*Rs[jj])
         tmp_df = pd.DataFrame([[Rs[jj],sigmas[ii],float(distortion),D]], columns = ['R','sigma','distortion','D'])
-        all_res = pd.concat([all_res,tmp_df])
+        all_res = pd.concat([all_res,tmp_df],ignore_index = False)
         print(tmp_df)
+
+all_res.to_csv("results/res.csv")
+with open("results/res.txt", "wb") as fp:   #Pickling
+    pickle.dump(all_xhat_reduced, fp)
+with open("results/res.txt", "rb") as fp:   # Unpickling
+    b = pickle.load(fp)
+
+orig_xhats = {}
+for k,v in zip(b.keys(),b.values()): orig_xhats[k]=v
+set_trace()
 #todo plots
