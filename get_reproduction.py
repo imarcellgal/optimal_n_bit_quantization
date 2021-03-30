@@ -67,7 +67,7 @@ def get_new_xhat(rvs, rvs2, v_bounds, get_distortion = False):
 
 K = 300 #number of iteration of the Iloyd's algorithm
 sigmas = np.arange(1,6) #define which sigma values to run algorithm on
-Rs = np.arange(2,25) #define which R values to run the algorithm on
+Rs = np.arange(2,10) #define which R values to run the algorithm on
 all_res = pd.DataFrame() #initalize dataframe for storing results
 all_xhat=[] #store xhat values for different settings and the distortions for
 # each region

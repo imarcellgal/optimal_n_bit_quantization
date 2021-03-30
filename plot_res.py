@@ -102,8 +102,8 @@ def update_output(value):
     dash.dependencies.Output('fig1', 'figure'),
     [dash.dependencies.Input('sigma-slider', 'value')])
 def update_fig_1(value):
-    fig = make_subplots(rows =1, cols = 2, subplot_titles=('Distortion and minimum distortion vs R',
-    'Distortion/Minimum distortion vs R'))
+    fig = make_subplots(rows =1, cols = 2, subplot_titles=('Distortion and minimum distortion vs R for N(0,{})'.format(value),
+    'Distortion/Minimum distortion vs R for N(0,{})'.format(value)))
     fig.add_trace(go.Scatter(name = 'Distortion', x=all_res.loc[all_res.sigma==value]['R'],
      y=all_res.loc[all_res.sigma==value]['distortion'], mode='lines'), row =1, col =1
      )
