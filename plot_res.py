@@ -147,10 +147,10 @@ def update_fig_1(sigma, R):
     fig.add_trace(go.Bar(name = 'Distortions', x= ['Region {}'.format(i+1) for i in range(len(distortions))],
      y=data[1]),row=1,col=2
      )
-    fig['layout']['yaxis']['title']='pdf of N(0,{})'.format(sigma)
+    fig['layout']['yaxis']['title']='Probability density'.format(sigma)
     fig['layout']['xaxis']['title']='x'
     fig['layout']['xaxis2']['title']='Voronoi regions'
-    fig['layout']['yaxis2']['title']='Distorion'
+    fig['layout']['yaxis2']['title']='Distortion'
     return fig
 if __name__ == '__main__':
     app.run_server(debug=True)

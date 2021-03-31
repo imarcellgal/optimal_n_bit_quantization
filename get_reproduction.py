@@ -29,6 +29,7 @@ def get_new_xhat(rvs, rvs2, v_bounds, get_distortion = False):
     exps = []
     exps_symb = []
     distortions = []
+    err = False
 
     for j in range(len(v_bounds)+1):
         if j == 0:
@@ -56,18 +57,23 @@ def get_new_xhat(rvs, rvs2, v_bounds, get_distortion = False):
         exps.append(tmp_exp)
         if get_distortion == True:
             try:
-                distortions.append(E((rvs2-float(tmp_exp2))**2,( rvs2<ub2)&(rvs2>lb2))*P((rvs2<ub2)&(rvs2>lb2)))
+                distortions.append(E((rvs2-tmp_exp)**2,( rvs2<ub2)&(rvs2>lb2))*P((rvs2<ub2)&(rvs2>lb2)))
             except:
+                print('error')
+                err = True
+                return err,exps, exps_symb, distortions
+
                 distortions.append(1)
     if get_distortion==False:
         return exps, exps_symb
     else:
-        return exps, exps_symb, distortions
+        print(err)
+        return err,exps, exps_symb, distortions
 
 
-K = 300 #number of iteration of the Iloyd's algorithm
-sigmas = np.arange(1,6) #define which sigma values to run algorithm on
-Rs = np.arange(2,10) #define which R values to run the algorithm on
+K = 100 #number of iteration of the Iloyd's algorithm
+sigmas = np.arange(1,3) #define which sigma values to run algorithm on
+Rs = np.arange(1,7) #define which R values to run the algorithm on
 all_res = pd.DataFrame() #initalize dataframe for storing results
 all_xhat=[] #store xhat values for different settings and the distortions for
 # each region
@@ -77,8 +83,10 @@ with open("results/config.txt", "wb") as fp:
     pickle.dump(config, fp)
 # the algorithm
 for jj in range(len(Rs)):
-    points = np.sort(np.random.rand(Rs[jj]))*2-1
     for ii in range(len(sigmas)):
+        #points = np.sort(np.random.rand(2**Rs[jj]))*2-1 #initalize points randomly from -1 to 1
+        # initalize half of the points from -1 to 0 and half of them from 0 to 1
+        points = np.sort(np.concatenate(((-1)*np.random.rand(2**(Rs[jj]-1)),np.random.rand(2**(Rs[jj]-1)))),axis = 0)*sigmas[ii]
         rvs = st.norm(scale = sigmas[ii])
         rvs2 = Normal('rvs2', 0, sigmas[ii])
 
@@ -89,7 +97,21 @@ for jj in range(len(Rs)):
             points = exps
 
         final_v_bounds = get_v_bounds(points)
-        exps, exps_symb, distortions = get_new_xhat(rvs,rvs2, final_v_bounds, get_distortion = True )
+        err, exps, exps_symb, distortions = get_new_xhat(rvs,rvs2, final_v_bounds, get_distortion = True )
+        while err == True:
+            points = np.sort(np.concatenate(((-1)*np.random.rand(2**(Rs[jj]-1)),np.random.rand(2**(Rs[jj]-1)))),axis = 0)*sigmas[ii]
+            rvs = st.norm(scale = sigmas[ii])
+            rvs2 = Normal('rvs2', 0, sigmas[ii])
+
+            for i in range(K):
+                v_bounds = get_v_bounds(points)
+                exps, exps_symb = get_new_xhat(rvs,rvs2, v_bounds)
+
+                points = exps
+
+            final_v_bounds = get_v_bounds(points)
+            err, exps, exps_symb, distortions = get_new_xhat(rvs,rvs2, final_v_bounds, get_distortion = True )
+
         all_xhat.append((exps,exps_symb,distortions))
         all_xhat_reduced[(Rs[jj],sigmas[ii])]=([exps,[float(d) for d in distortions],final_v_bounds])
         distortion = np.sum(distortions)
