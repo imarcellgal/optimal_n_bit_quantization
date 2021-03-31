@@ -113,8 +113,8 @@ def update_fig_1(value):
     fig.add_trace(go.Scatter(name = 'Distortion/Minimum distortion', x=all_res.loc[all_res.sigma==value]['R'],
      y=all_res.loc[all_res.sigma==value]['distortion']/all_res.loc[all_res.sigma==value]['D'], mode='lines'), row =1, col =2
      )
-    fig['layout']['yaxis']['title']='R'
-    fig['layout']['yaxis2']['title']='R'
+    fig['layout']['xaxis']['title']='R'
+    fig['layout']['xaxis2']['title']='R'
     return fig
 
 @app.callback(
